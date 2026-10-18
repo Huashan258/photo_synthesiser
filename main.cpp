@@ -17,6 +17,13 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 namespace fs = std::filesystem;
 
+// 版本号由 CMakeLists.txt 的 project(... VERSION x.y.z) 注入
+#ifndef APP_VERSION
+#define APP_VERSION L"1.0.1"
+#endif
+// 窗口/标题使用的完整名称
+#define APP_TITLE L"图片拼接工具 v" APP_VERSION
+
 // 支持的图片扩展名
 static const std::vector<std::string> kExtensions = {
     ".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"
@@ -288,7 +295,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case WM_CREATE: {
         // 标题与副标题
-        CreateWindowExW(0, L"STATIC", L"图片拼接工具",
+        CreateWindowExW(0, L"STATIC", APP_TITLE,
             WS_CHILD | WS_VISIBLE,
             24, 16, 300, 34, hWnd, reinterpret_cast<HMENU>(IDC_TITLE), nullptr, nullptr);
         CreateWindowExW(0, L"STATIC", L"把多张截图按顺序纵向或横向拼接成长图",
@@ -446,7 +453,7 @@ int runGui() {
     RECT rc = { 0, 0, 544, 486 };
     DWORD style = WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX;
     AdjustWindowRect(&rc, style, FALSE);
-    HWND hWnd = CreateWindowExW(0, wc.lpszClassName, L"图片拼接工具",
+    HWND hWnd = CreateWindowExW(0, wc.lpszClassName, APP_TITLE,
         style | WS_VISIBLE,
         CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top,
         nullptr, nullptr, wc.hInstance, nullptr);

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(photo_synthesiser)
+project(photo_synthesiser VERSION 1.0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -17,6 +17,9 @@ message(STATUS "OpenCV version: ${OpenCV_VERSION}")
 message(STATUS "OpenCV libs: ${OpenCV_LIBS}")
 
 add_executable(photo_synthesiser main.cpp)
+
+# 版本号（CMakeLists 里的 project VERSION 是唯一来源，改一处即可）
+target_compile_definitions(photo_synthesiser PRIVATE "APP_VERSION=L\"${PROJECT_VERSION}\"")
 
 # 程序图标（Windows 资源，编译进 exe）
 if(WIN32)
