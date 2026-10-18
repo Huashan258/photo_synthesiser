@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(photo_synthesiser VERSION 1.0.1 LANGUAGES CXX)
+project(photo_synthesiser VERSION 1.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,7 +16,27 @@ find_package(OpenCV REQUIRED)
 message(STATUS "OpenCV version: ${OpenCV_VERSION}")
 message(STATUS "OpenCV libs: ${OpenCV_LIBS}")
 
+# ---------- Slint（现代化 UI）----------
+# E:\slint 下的 Slint C++ SDK 解压目录（可用 -DSLINT_SDK=... 覆盖）
+if(NOT DEFINED SLINT_SDK)
+    set(SLINT_SDK "E:/slint/Slint-cpp 1.18.1")
+endif()
+list(APPEND CMAKE_PREFIX_PATH "${SLINT_SDK}/lib/cmake/Slint")
+find_package(Slint REQUIRED)
+message(STATUS "Slint version: ${Slint_VERSION}")
+
 add_executable(photo_synthesiser main.cpp)
+
+# 把 .slint 编译成 C++ 头文件（生成物在构建目录，自动加入 include 路径）
+slint_target_sources(photo_synthesiser ui/app-window.slint)
+target_link_libraries(photo_synthesiser PRIVATE Slint::Slint)
+
+# 运行时需要 slint_cpp.dll 与 exe 同目录
+add_custom_command(TARGET photo_synthesiser POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${SLINT_SDK}/lib/slint_cpp.dll"
+        "$<TARGET_FILE_DIR:photo_synthesiser>"
+)
 
 # 版本号（CMakeLists 里的 project VERSION 是唯一来源，改一处即可）
 target_compile_definitions(photo_synthesiser PRIVATE "APP_VERSION=L\"${PROJECT_VERSION}\"")

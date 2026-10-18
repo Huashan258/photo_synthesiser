@@ -1,0 +1,482 @@
+// 图片拼接工具 - 主界面（Slint）
+// 编译后由 CMake 生成 app-window.h，C++ 侧通过 AppWindow 类驱动
+
+import { ListView } from "std-widgets.slint";
+
+export global Palette {
+    // 主色
+    in property <color> accent: #2563eb;
+    in property <color> accent-hover: #1d4ed8;
+    in property <color> accent-press: #1e40af;
+    in property <color> accent-soft: #eaf1ff;
+    // 中性色
+    in property <color> window-bg: #f4f6fa;
+    in property <color> surface: #ffffff;
+    in property <color> line: #e3e8f0;
+    in property <color> text: #1f2430;
+    in property <color> sub-text: #7a8496;
+    in property <color> hover: #f2f5fb;
+}
+
+// 列表项数据（由 C++ 填充）
+export struct ImageItem {
+    index-label: string,   // 序号，如 "1"
+    name: string,          // 文件名
+    detail: string,        // 尺寸 / 体积等附加信息
+    thumb: image,          // 缩略图
+}
+
+// 通用操作按钮
+component ToolButton inherits Rectangle {
+    in property <string> label: "按钮";
+    in property <bool> primary: false;
+    in property <bool> enabled: true;
+    callback clicked();
+
+    width: 88px;
+    height: 34px;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: root.primary ? Palette.accent : Palette.line;
+    background: root.primary ? Palette.accent : Palette.surface;
+    opacity: root.enabled ? 1.0 : 0.45;
+
+    animate background { duration: 120ms; }
+    animate border-color { duration: 120ms; }
+
+    ta := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? pointer : default;
+        clicked => { root.clicked(); }
+    }
+
+    Text {
+        text: root.label;
+        color: root.primary ? #ffffff : Palette.text;
+        font-size: 13px;
+        font-weight: 500;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        width: 100%;
+        height: 100%;
+    }
+
+    states [
+        hover-plain when ta.has-hover && root.enabled && !root.primary : {
+            root.background: Palette.hover;
+            root.border-color: #b9c6de;
+        }
+        hover-primary when ta.has-hover && root.enabled && root.primary : {
+            root.background: Palette.accent-hover;
+            root.border-color: Palette.accent-hover;
+        }
+        pressed when ta.pressed && root.enabled : {
+            root.background: root.primary ? Palette.accent-press : #e6ebf5;
+        }
+    ]
+}
+
+// 方向切换分段按钮
+component SegButton inherits Rectangle {
+    in property <string> label: "";
+    in property <bool> active: false;
+    callback clicked();
+
+    height: 34px;
+    border-radius: 8px;
+    background: root.active ? Palette.surface : transparent;
+    animate background { duration: 120ms; }
+
+    ta := TouchArea {
+        mouse-cursor: pointer;
+        clicked => { root.clicked(); }
+    }
+
+    HorizontalLayout {
+        alignment: center;
+        spacing: 6px;
+        Text {
+            text: root.label;
+            color: root.active ? Palette.accent : Palette.sub-text;
+            font-size: 13px;
+            font-weight: root.active ? 600 : 400;
+            vertical-alignment: center;
+        }
+    }
+}
+
+export component AppWindow inherits Window {
+    // ---- 数据（C++ 侧驱动）----
+    in-out property <[ImageItem]> images: [];
+    in-out property <int> selected-index: -1;
+    in-out property <bool> vertical: true;             // true=纵向（默认）
+    in-out property <string> status: "就绪，先添加图片吧";
+    in-out property <string> count-text: "0 张图片";
+    in-out property <string> preview-text: "—";
+    in-out property <bool> busy: false;
+    in-out property <bool> has-result: false;
+
+    // ---- 回调 ----
+    callback add-images();
+    callback remove-item(int);
+    callback move-up(int);
+    callback move-down(int);
+    callback clear-all();
+    callback generate();
+    callback open-result();
+    callback direction-changed();
+
+    title: "图片拼接工具 v1.1.0";
+    icon: @image-url("../icon.png");
+    default-font-family: "Microsoft YaHei UI";
+    background: Palette.window-bg;
+    width: 940px;
+    height: 620px;
+
+    VerticalLayout {
+        spacing: 0;
+
+        // ---------- 顶部标题栏 ----------
+        Rectangle {
+            height: 74px;
+            background: Palette.surface;
+
+            HorizontalLayout {
+                padding-left: 20px;
+                padding-right: 20px;
+                spacing: 14px;
+                alignment: center;
+
+                Image {
+                    width: 40px;
+                    height: 40px;
+                    source: @image-url("../icon.png");
+                    image-fit: contain;
+                }
+
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 3px;
+                    Text {
+                        text: "图片拼接工具";
+                        font-size: 18px;
+                        font-weight: 700;
+                        color: Palette.text;
+                    }
+                    Text {
+                        text: "按顺序把多张截图拼成一张长图 · 纯本地运行";
+                        font-size: 12px;
+                        color: Palette.sub-text;
+                    }
+                }
+
+                Rectangle { horizontal-stretch: 1; }
+
+                Rectangle {
+                    height: 30px;
+                    border-radius: 15px;
+                    background: Palette.accent-soft;
+                    HorizontalLayout {
+                        padding-left: 12px;
+                        padding-right: 12px;
+                        alignment: center;
+                        Text {
+                            text: root.count-text;
+                            font-size: 12px;
+                            color: Palette.accent;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+
+            Rectangle { height: 1px; background: Palette.line; y: parent.height - 1px; }
+        }
+
+        // ---------- 主体 ----------
+        HorizontalLayout {
+            spacing: 0;
+
+            // 左侧：工具栏 + 图片列表
+            VerticalLayout {
+                horizontal-stretch: 1;
+                padding: 16px;
+                spacing: 12px;
+
+                // 工具栏
+                HorizontalLayout {
+                    spacing: 8px;
+                    alignment: start;
+                    ToolButton {
+                        label: "添加图片";
+                        width: 96px;
+                        primary: true;
+                        clicked => { root.add-images(); }
+                    }
+                    ToolButton {
+                        label: "上移";
+                        enabled: root.selected-index > 0;
+                        clicked => { root.move-up(root.selected-index); }
+                    }
+                    ToolButton {
+                        label: "下移";
+                        enabled: root.selected-index >= 0 && root.selected-index < root.images.length - 1;
+                        clicked => { root.move-down(root.selected-index); }
+                    }
+                    ToolButton {
+                        label: "删除";
+                        enabled: root.selected-index >= 0;
+                        clicked => { root.remove-item(root.selected-index); }
+                    }
+                    ToolButton {
+                        label: "清空";
+                        enabled: root.images.length > 0;
+                        clicked => { root.clear-all(); }
+                    }
+                }
+
+                // 列表容器
+                Rectangle {
+                    vertical-stretch: 1;
+                    border-radius: 12px;
+                    background: Palette.surface;
+                    border-width: 1px;
+                    border-color: Palette.line;
+                    clip: true;
+
+                    ListView {
+                        for item[idx] in root.images : Rectangle {
+                            height: 66px;
+                            width: 100%;
+                            border-radius: 10px;
+                            background: root.selected-index == idx ? Palette.accent-soft : (row-ta.has-hover ? Palette.hover : transparent);
+                            border-width: root.selected-index == idx ? 1px : 0px;
+                            border-color: Palette.accent;
+                            animate background { duration: 100ms; }
+
+                            row-ta := TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => { root.selected-index = idx; }
+                            }
+
+                            HorizontalLayout {
+                                padding-left: 10px;
+                                padding-right: 12px;
+                                spacing: 10px;
+                                alignment: center;
+
+                                Text {
+                                    width: 20px;
+                                    text: item.index-label;
+                                    font-size: 12px;
+                                    color: Palette.sub-text;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+
+                                Rectangle {
+                                    width: 56px;
+                                    height: 42px;
+                                    border-radius: 6px;
+                                    background: #eef1f6;
+                                    clip: true;
+                                    Image {
+                                        width: 100%;
+                                        height: 100%;
+                                        source: item.thumb;
+                                        image-fit: cover;
+                                    }
+                                }
+
+                                VerticalLayout {
+                                    horizontal-stretch: 1;
+                                    alignment: center;
+                                    spacing: 2px;
+                                    Text {
+                                        text: item.name;
+                                        font-size: 13px;
+                                        color: Palette.text;
+                                        overflow: elide;
+                                        max-lines: 1;
+                                    }
+                                    Text {
+                                        text: item.detail;
+                                        font-size: 11px;
+                                        color: Palette.sub-text;
+                                        overflow: elide;
+                                        max-lines: 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // 空状态
+                    if root.images.length == 0 : VerticalLayout {
+                        alignment: center;
+                        spacing: 10px;
+                        Rectangle {
+                            width: 54px;
+                            height: 54px;
+                            border-radius: 27px;
+                            background: Palette.accent-soft;
+                            Text {
+                                text: "+";
+                                font-size: 26px;
+                                color: Palette.accent;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                                width: 100%;
+                                height: 100%;
+                            }
+                        }
+                        Text {
+                            text: "还没有图片，点击「添加图片」开始";
+                            font-size: 13px;
+                            color: Palette.sub-text;
+                            horizontal-alignment: center;
+                        }
+                    }
+                }
+            }
+
+            // 右侧：设置面板
+            Rectangle {
+                width: 236px;
+                background: Palette.surface;
+                border-width: 1px;
+                border-color: Palette.line;
+
+                VerticalLayout {
+                    padding: 16px;
+                    spacing: 16px;
+
+                    Text {
+                        text: "拼接方向";
+                        font-size: 13px;
+                        font-weight: 600;
+                        color: Palette.text;
+                    }
+
+                    Rectangle {
+                        height: 38px;
+                        border-radius: 10px;
+                        background: Palette.window-bg;
+                        border-width: 1px;
+                        border-color: Palette.line;
+                        HorizontalLayout {
+                            padding: 2px;
+                            spacing: 2px;
+                            SegButton {
+                                horizontal-stretch: 1;
+                                label: "纵向 ↓";
+                                active: root.vertical;
+                                clicked => { root.vertical = true; root.direction-changed(); }
+                            }
+                            SegButton {
+                                horizontal-stretch: 1;
+                                label: "横向 →";
+                                active: !root.vertical;
+                                clicked => { root.vertical = false; root.direction-changed(); }
+                            }
+                        }
+                    }
+
+                    Rectangle { height: 1px; background: Palette.line; }
+
+                    Text {
+                        text: "输出预览";
+                        font-size: 13px;
+                        font-weight: 600;
+                        color: Palette.text;
+                    }
+
+                    Rectangle {
+                        height: 54px;
+                        border-radius: 10px;
+                        background: Palette.window-bg;
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 2px;
+                            Text {
+                                text: root.preview-text;
+                                font-size: 13px;
+                                color: Palette.text;
+                                horizontal-alignment: center;
+                            }
+                            Text {
+                                text: "尺寸不同的图片会自动缩放对齐";
+                                font-size: 10px;
+                                color: Palette.sub-text;
+                                horizontal-alignment: center;
+                            }
+                        }
+                    }
+
+                    Rectangle { vertical-stretch: 1; }
+
+                    Text {
+                        text: "提示：双击 exe 直接打开本面板；也可以拖到命令行用「目录 输出文件 [v|h]」批量处理。";
+                        font-size: 11px;
+                        color: Palette.sub-text;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+        }
+
+        // ---------- 底部操作栏 ----------
+        Rectangle {
+            height: 72px;
+            background: Palette.surface;
+            Rectangle { height: 1px; background: Palette.line; }
+
+            HorizontalLayout {
+                padding-left: 20px;
+                padding-right: 20px;
+                spacing: 12px;
+                alignment: center;
+
+                HorizontalLayout {
+                    horizontal-stretch: 1;
+                    spacing: 10px;
+                    alignment: start;
+
+                    // 忙碌指示
+                    Rectangle {
+                        width: 16px;
+                        height: 16px;
+                        border-radius: 8px;
+                        background: root.busy ? Palette.accent : #d5dae4;
+                        animate background { duration: 200ms; }
+                    }
+
+                    Text {
+                        horizontal-stretch: 1;
+                        text: root.status;
+                        font-size: 13px;
+                        color: Palette.text;
+                        vertical-alignment: center;
+                        wrap: word-wrap;
+                        max-lines: 2;
+                    }
+                }
+
+                ToolButton {
+                    label: "打开结果";
+                    width: 96px;
+                    enabled: root.has-result && !root.busy;
+                    clicked => { root.open-result(); }
+                }
+                ToolButton {
+                    label: root.busy ? "生成中…" : "生成拼接图";
+                    width: 124px;
+                    primary: true;
+                    enabled: !root.busy && root.images.length > 0;
+                    clicked => { root.generate(); }
+                }
+            }
+        }
+    }
+}

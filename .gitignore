@@ -34,6 +34,8 @@ images/
 *.jpg
 !docs/*.jpg
 panel_screenshot.png
+slint_panel.png
+slint_*.png
 result*.jpg
 result*.png
 panorama*.jpg
