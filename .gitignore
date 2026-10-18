@@ -47,3 +47,6 @@ __pycache__/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# ---------- 本地私有脚本（不上传）----------
+上传主分支.bat
