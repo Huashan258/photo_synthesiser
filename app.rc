@@ -1,0 +1,3 @@
+// Windows 资源文件：程序图标（资源 ID 必须为 1）
+// icon.ico 由 tools/make_icon.py 从 icon.png 生成
+1 ICON "icon.ico"

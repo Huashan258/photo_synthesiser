@@ -141,7 +141,7 @@ static void refreshList() {
         std::wstring name = fs::path(f).filename().wstring();
         SendMessageW(g.hList, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(name.c_str()));
     }
-    std::wstring status = L"已添加 " + std::to_wstring(g.files.size()) + L" 张图片";
+    std::wstring status = L"已添加 " + std::to_string(g.files.size()) + L" 张图片";
     SetWindowTextW(g.hStatus, status.c_str());
 }
 
@@ -435,7 +435,11 @@ int runGui() {
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wc.hbrBackground = g_bgBrush;
     wc.lpszClassName = L"PhotoSynthesiserWnd";
-    wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
+    // 从资源加载程序图标（app.rc 中 ID=1，由 icon.png 生成）
+    wc.hIcon = reinterpret_cast<HICON>(LoadImageW(wc.hInstance,
+        MAKEINTRESOURCEW(1), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE));
+    wc.hIconSm = reinterpret_cast<HICON>(LoadImageW(wc.hInstance,
+        MAKEINTRESOURCEW(1), IMAGE_ICON, 16, 16, LR_DEFAULTSIZE));
     RegisterClassExW(&wc);
 
     // 客户区 544x486
@@ -454,6 +458,11 @@ int runGui() {
     }
     ShowWindow(hWnd, SW_SHOW);
     UpdateWindow(hWnd);
+
+    // 刷新标题栏大图标（任务栏会用 class 的 hIcon）
+    if (HICON hBig = reinterpret_cast<HICON>(LoadImageW(wc.hInstance,
+            MAKEINTRESOURCEW(1), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE)))
+        SendMessageW(hWnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hBig));
 
     MSG m;
     while (GetMessageW(&m, nullptr, 0, 0)) {

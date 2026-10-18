@@ -18,6 +18,11 @@ message(STATUS "OpenCV libs: ${OpenCV_LIBS}")
 
 add_executable(photo_synthesiser main.cpp)
 
+# 程序图标（Windows 资源，编译进 exe）
+if(WIN32)
+    target_sources(photo_synthesiser PRIVATE app.rc)
+endif()
+
 target_include_directories(photo_synthesiser PRIVATE ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(photo_synthesiser PRIVATE ${OpenCV_LIBS})
 
