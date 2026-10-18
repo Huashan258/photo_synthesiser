@@ -141,7 +141,7 @@ static void refreshList() {
         std::wstring name = fs::path(f).filename().wstring();
         SendMessageW(g.hList, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(name.c_str()));
     }
-    std::wstring status = L"已添加 " + std::to_string(g.files.size()) + L" 张图片";
+    std::wstring status = L"已添加 " + std::to_wstring(g.files.size()) + L" 张图片";
     SetWindowTextW(g.hStatus, status.c_str());
 }
 
