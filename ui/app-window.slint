@@ -126,67 +126,64 @@ export component AppWindow inherits Window {
     callback open-result();
     callback direction-changed();
 
-    title: "图片拼接工具 v1.1.0";
+    title: "图片拼接工具 v1.1.1";
     icon: @image-url("../icon.png");
     default-font-family: "Microsoft YaHei UI";
     background: Palette.window-bg;
     width: 940px;
-    height: 620px;
+    height: 650px;
 
     VerticalLayout {
         spacing: 0;
 
         // ---------- 顶部标题栏 ----------
         Rectangle {
-            height: 74px;
+            height: 104px;
             background: Palette.surface;
 
-            HorizontalLayout {
-                padding-left: 20px;
-                padding-right: 20px;
-                spacing: 14px;
-                alignment: center;
+            // 图标：与右侧文字块（标题 18px + 副标题 12px）共用中心线
+            Image {
+                x: 20px;
+                y: 16px;
+                width: 40px;
+                height: 40px;
+                source: @image-url("../icon.png");
+                image-fit: contain;
+            }
 
-                Image {
-                    width: 40px;
-                    height: 40px;
-                    source: @image-url("../icon.png");
-                    image-fit: contain;
-                }
+            Text {
+                x: 72px;
+                y: 15px;
+                text: "图片拼接工具";
+                font-size: 18px;
+                font-weight: 700;
+                color: Palette.text;
+            }
+            Text {
+                x: 72px;
+                y: 41px;
+                text: "按顺序把多张截图拼成一张长图 · 纯本地运行";
+                font-size: 12px;
+                color: Palette.sub-text;
+            }
 
-                VerticalLayout {
+            // 图片数量：单独一行，避免与图标 / 文字重叠
+            Rectangle {
+                height: 28px;
+                y: 64px;
+                x: 72px;
+                border-radius: 14px;
+                background: Palette.accent-soft;
+                HorizontalLayout {
+                    padding-left: 12px;
+                    padding-right: 12px;
                     alignment: center;
-                    spacing: 3px;
                     Text {
-                        text: "图片拼接工具";
-                        font-size: 18px;
-                        font-weight: 700;
-                        color: Palette.text;
-                    }
-                    Text {
-                        text: "按顺序把多张截图拼成一张长图 · 纯本地运行";
+                        text: root.count-text;
                         font-size: 12px;
-                        color: Palette.sub-text;
-                    }
-                }
-
-                Rectangle { horizontal-stretch: 1; }
-
-                Rectangle {
-                    height: 30px;
-                    border-radius: 15px;
-                    background: Palette.accent-soft;
-                    HorizontalLayout {
-                        padding-left: 12px;
-                        padding-right: 12px;
-                        alignment: center;
-                        Text {
-                            text: root.count-text;
-                            font-size: 12px;
-                            color: Palette.accent;
-                            font-weight: 600;
-                            vertical-alignment: center;
-                        }
+                        color: Palette.accent;
+                        font-weight: 600;
+                        vertical-alignment: center;
                     }
                 }
             }
@@ -260,53 +257,57 @@ export component AppWindow inherits Window {
                                 clicked => { root.selected-index = idx; }
                             }
 
-                            HorizontalLayout {
-                                padding-left: 10px;
-                                padding-right: 12px;
-                                spacing: 10px;
+                            // 序号（垂直居中）
+                            Text {
+                                x: 10px;
+                                y: 0px;
+                                width: 20px;
+                                height: parent.height;
+                                text: item.index-label;
+                                font-size: 12px;
+                                color: Palette.sub-text;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            // 缩略图（垂直居中）
+                            Rectangle {
+                                x: 40px;
+                                y: (parent.height - 42px) / 2;
+                                width: 56px;
+                                height: 42px;
+                                border-radius: 6px;
+                                background: #eef1f6;
+                                clip: true;
+                                Image {
+                                    width: 100%;
+                                    height: 100%;
+                                    source: item.thumb;
+                                    image-fit: cover;
+                                }
+                            }
+
+                            // 文件名 + 尺寸信息（整块垂直居中）
+                            VerticalLayout {
+                                x: 106px;
+                                y: 0px;
+                                width: parent.width - 118px;
+                                height: parent.height;
                                 alignment: center;
-
+                                spacing: 2px;
                                 Text {
-                                    width: 20px;
-                                    text: item.index-label;
-                                    font-size: 12px;
+                                    text: item.name;
+                                    font-size: 13px;
+                                    color: Palette.text;
+                                    overflow: elide;
+                                    max-lines: 1;
+                                }
+                                Text {
+                                    text: item.detail;
+                                    font-size: 11px;
                                     color: Palette.sub-text;
-                                    horizontal-alignment: center;
-                                    vertical-alignment: center;
-                                }
-
-                                Rectangle {
-                                    width: 56px;
-                                    height: 42px;
-                                    border-radius: 6px;
-                                    background: #eef1f6;
-                                    clip: true;
-                                    Image {
-                                        width: 100%;
-                                        height: 100%;
-                                        source: item.thumb;
-                                        image-fit: cover;
-                                    }
-                                }
-
-                                VerticalLayout {
-                                    horizontal-stretch: 1;
-                                    alignment: center;
-                                    spacing: 2px;
-                                    Text {
-                                        text: item.name;
-                                        font-size: 13px;
-                                        color: Palette.text;
-                                        overflow: elide;
-                                        max-lines: 1;
-                                    }
-                                    Text {
-                                        text: item.detail;
-                                        font-size: 11px;
-                                        color: Palette.sub-text;
-                                        overflow: elide;
-                                        max-lines: 1;
-                                    }
+                                    overflow: elide;
+                                    max-lines: 1;
                                 }
                             }
                         }
@@ -315,22 +316,6 @@ export component AppWindow inherits Window {
                     // 空状态
                     if root.images.length == 0 : VerticalLayout {
                         alignment: center;
-                        spacing: 10px;
-                        Rectangle {
-                            width: 54px;
-                            height: 54px;
-                            border-radius: 27px;
-                            background: Palette.accent-soft;
-                            Text {
-                                text: "+";
-                                font-size: 26px;
-                                color: Palette.accent;
-                                horizontal-alignment: center;
-                                vertical-alignment: center;
-                                width: 100%;
-                                height: 100%;
-                            }
-                        }
                         Text {
                             text: "还没有图片，点击「添加图片」开始";
                             font-size: 13px;
@@ -432,50 +417,47 @@ export component AppWindow inherits Window {
             background: Palette.surface;
             Rectangle { height: 1px; background: Palette.line; }
 
-            HorizontalLayout {
-                padding-left: 20px;
-                padding-right: 20px;
-                spacing: 12px;
-                alignment: center;
+            // 忙碌指示点
+            Rectangle {
+                x: 20px;
+                y: (parent.height - 16px) / 2;
+                width: 16px;
+                height: 16px;
+                border-radius: 8px;
+                background: root.busy ? Palette.accent : #d5dae4;
+                animate background { duration: 200ms; }
+            }
 
-                HorizontalLayout {
-                    horizontal-stretch: 1;
-                    spacing: 10px;
-                    alignment: start;
+            // 状态文字（x=46 到打开结果按钮左缘之间留 100px 间距）
+            Text {
+                x: 46px;
+                y: 0px;
+                width: parent.width - 46px - 100px - 96px - 12px - 124px - 20px;
+                height: parent.height;
+                text: root.status;
+                font-size: 13px;
+                color: Palette.text;
+                vertical-alignment: center;
+                wrap: word-wrap;
+                max-lines: 2;
+            }
 
-                    // 忙碌指示
-                    Rectangle {
-                        width: 16px;
-                        height: 16px;
-                        border-radius: 8px;
-                        background: root.busy ? Palette.accent : #d5dae4;
-                        animate background { duration: 200ms; }
-                    }
-
-                    Text {
-                        horizontal-stretch: 1;
-                        text: root.status;
-                        font-size: 13px;
-                        color: Palette.text;
-                        vertical-alignment: center;
-                        wrap: word-wrap;
-                        max-lines: 2;
-                    }
-                }
-
-                ToolButton {
-                    label: "打开结果";
-                    width: 96px;
-                    enabled: root.has-result && !root.busy;
-                    clicked => { root.open-result(); }
-                }
-                ToolButton {
-                    label: root.busy ? "生成中…" : "生成拼接图";
-                    width: 124px;
-                    primary: true;
-                    enabled: !root.busy && root.images.length > 0;
-                    clicked => { root.generate(); }
-                }
+            ToolButton {
+                label: "打开结果";
+                x: parent.width - 20px - 124px - 12px - 96px;
+                y: (parent.height - 34px) / 2;
+                width: 96px;
+                enabled: root.has-result && !root.busy;
+                clicked => { root.open-result(); }
+            }
+            ToolButton {
+                label: root.busy ? "生成中…" : "生成拼接图";
+                x: parent.width - 20px - 124px;
+                y: (parent.height - 34px) / 2;
+                width: 124px;
+                primary: true;
+                enabled: !root.busy && root.images.length > 0;
+                clicked => { root.generate(); }
             }
         }
     }

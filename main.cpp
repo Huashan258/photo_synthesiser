@@ -25,7 +25,7 @@ namespace fs = std::filesystem;
 
 // 版本号由 CMakeLists.txt 的 project(... VERSION x.y.z) 注入
 #ifndef APP_VERSION
-#define APP_VERSION "1.1.0"
+#define APP_VERSION "1.1.1"
 #endif
 
 // ---------------- 编码转换 ----------------
