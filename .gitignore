@@ -1,0 +1,49 @@
+# ---------- 构建产物 ----------
+cmake-build-*/
+build/
+out/
+cmake-build-debug/
+cmake-build-release/
+cmake-build-msvc/
+
+# ---------- IDE ----------
+.idea/
+.vscode/
+*.iml
+cmake-build-*/.idea/
+
+# ---------- 编译中间文件 / 可执行文件 ----------
+*.exe
+*.dll
+*.lib
+*.pdb
+*.obj
+*.ilk
+*.exp
+*.idb
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+build.ninja
+Makefile
+.ninja_deps
+.ninja_log
+
+# ---------- 测试素材 / 生成结果（不必要上传） ----------
+images/
+*.jpg
+!docs/*.jpg
+panel_screenshot.png
+result*.jpg
+result*.png
+panorama*.jpg
+
+# ---------- 本地工具数据 ----------
+.workbuddy/
+__pycache__/
+*.pyc
+
+# ---------- 系统文件 ----------
+Thumbs.db
+Desktop.ini
+.DS_Store
